@@ -1,0 +1,8 @@
+{
+  "name": "a04s-rom-studio-emulator-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "ws": "^8.18.0" }
+}
