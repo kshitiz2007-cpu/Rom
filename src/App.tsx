@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 
-type Tab = 'Dashboard' | 'ROM Designer' | 'Device Profile' | 'Features' | 'Build Center' | 'Export Settings';
+type Tab = 'Dashboard' | 'ROM Designer' | 'Device Profile' | 'Features' | 'Virtual Device Lab' | 'Build Center' | 'Export Settings';
 type FeatureKey = 'amoled' | 'quickSettings' | 'lockscreen' | 'privacy' | 'battery' | 'performance' | 'debloat';
-const nav: Tab[] = ['Dashboard','ROM Designer','Device Profile','Features','Build Center','Export Settings'];
+const nav: Tab[] = ['Dashboard','ROM Designer','Device Profile','Features','Virtual Device Lab','Build Center','Export Settings'];
 const initial = { romName:'Nova A04s', version:'0.1.0', maintainer:'Kshitiz', androidBase:'Android 14 (unverified)', description:'A clean, customizable Android experience for Galaxy A04s.', accent:'#8b5cf6', dark:true, features:{amoled:true,quickSettings:true,lockscreen:false,privacy:true,battery:true,performance:false,debloat:false} as Record<FeatureKey,boolean>, device:'Samsung Galaxy A04s', model:'SM-A047F (variant not verified)', codename:'a04s (verify before build)' };
 const featureInfo: {key:FeatureKey,title:string,desc:string,category:string}[]=[
  {key:'amoled',title:'AMOLED Dark Mode',desc:'Use a dark-first color palette throughout the UI.',category:'UI'},
@@ -19,6 +19,8 @@ export default function App(){
  const [logs,setLogs]=useState<string[]>(['ROM Studio initialized.','Selected target: Galaxy A04s.','Build engine is demo-only in this prototype.']);
  const [notice,setNotice]=useState('');
  const [wallpaper,setWallpaper]=useState('');
+ const [workerUrl,setWorkerUrl]=useState('');
+ const [workerNote,setWorkerNote]=useState('No emulator worker connected. This panel is UI-only until the backend worker is deployed.');
  const enabledCount=useMemo(()=>Object.values(cfg.features).filter(Boolean).length,[cfg.features]);
  const update=(key:string,value:any)=>setCfg(prev=>({...prev,[key]:value}));
  const toggleFeature=(key:FeatureKey)=>setCfg(prev=>({...prev,features:{...prev.features,[key]:!prev.features[key]}}));
@@ -28,10 +30,10 @@ export default function App(){
  const importJson=(file:File)=>{file.text().then(t=>{try{const obj=JSON.parse(t);setCfg(prev=>({...prev,...obj,features:{...prev.features,...obj.features}}));setNotice('Configuration imported.');}catch{setNotice('Invalid JSON configuration.')}})};
  const reset=()=>{if(confirm('Reset ROM configuration to defaults?')){setCfg(initial);setNotice('Settings reset.')}};
  const setFeature=()=>null;
- const titleFor=tab==='Dashboard'?'Build your Android experience':tab==='ROM Designer'?'Design your ROM':tab==='Device Profile'?'Device profile':tab==='Features'?'Feature configuration':tab==='Build Center'?'Build center':'Export settings';
+ const titleFor=tab==='Dashboard'?'Build your Android experience':tab==='ROM Designer'?'Design your ROM':tab==='Device Profile'?'Device profile':tab==='Features'?'Feature configuration':tab==='Virtual Device Lab'?'Virtual Device Lab':tab==='Build Center'?'Build center':'Export settings';
  return <div className="app-shell">
   <aside className="sidebar"><div className="brand"><div className="brand-mark">R</div><div><b>ROM STUDIO</b><small>A04s edition</small></div></div>
-   <div className="side-label">WORKSPACE</div>{nav.map((n,i)=><button key={n} className={tab===n?'nav-item active':'nav-item'} onClick={()=>setTab(n)}><span className="nav-icon">{['⌂','✦','▣','⚙','⌁','⇩'][i]}</span>{n}</button>)}
+   <div className="side-label">WORKSPACE</div>{nav.map((n,i)=><button key={n} className={tab===n?'nav-item active':'nav-item'} onClick={()=>setTab(n)}><span className="nav-icon">{['⌂','✦','▣','⚙','▣','⌁','⇩'][i]}</span>{n}</button>)}
    <div className="sidebar-bottom"><div className="device-mini"><span className="pulse"></span><div><b>Galaxy A04s</b><small>Device profile selected</small></div></div><p>ROM Studio <span>v0.1.0</span></p></div>
   </aside>
   <main className="main"><header className="topbar"><div className="breadcrumb">Workspace <span>/</span> <b>{tab}</b></div><div className="top-actions"><span className="status-pill"><i/> Prototype</span><button className="avatar">K</button></div></header>
@@ -43,6 +45,18 @@ export default function App(){
    {tab==='Features'&&<><div className="filter-line"><span>Feature modules</span><span>{enabledCount} enabled</span></div><div className="feature-grid">{featureInfo.map(f=><div className="feature-card" key={f.key}><div className="feature-top"><span className="feature-icon">{f.category==='UI'?'✦':f.category==='Privacy'?'◈':'⌁'}</span><Toggle checked={cfg.features[f.key]} onChange={()=>toggleFeature(f.key)}/></div><span className="feature-category">{f.category}</span><h3>{f.title}</h3><p>{f.desc}</p></div>)}</div><div className="warning">These are configuration intentions, not implemented system modifications. Actual ROM feature code is a separate engineering step.</div></>}
    {tab==='Build Center'&&<div className="two-col"><div className="panel"><h2>Build configuration</h2><div className="summary-line"><span>Project</span><b>{cfg.romName}</b></div><div className="summary-line"><span>Version</span><b>{cfg.version}</b></div><div className="summary-line"><span>Target</span><b>Samsung Galaxy A04s</b></div><div className="summary-line"><span>Base</span><b>{cfg.androidBase}</b></div><div className="warning">Build engine is not connected. Validation checks project settings only; no firmware compilation or flashing occurs.</div><div className="buttons"><button className="secondary" onClick={validate}>Run validation</button><button className="primary" onClick={demoBuild}>Run demo build</button></div></div><div className="panel logs-panel"><div className="panel-title-row"><h2>Console output</h2><button className="text-button" onClick={()=>setLogs([])}>Clear</button></div><div className="logs">{logs.map((l,i)=><div key={i}><span className="log-time">›</span>{l}</div>)}</div></div></div>}
    {tab==='Export Settings'&&<div className="two-col"><div className="panel"><h2>Configuration backup</h2><p className="muted">Download your ROM design as a JSON file or restore from a previously exported configuration.</p><button className="primary full" onClick={exportJson}>Download JSON configuration</button><Field label="Import configuration JSON"><input type="file" accept=".json,application/json" onChange={e=>{const f=e.target.files?.[0];if(f)importJson(f)}}/></Field></div><div className="panel"><h2>Reset workspace</h2><p className="muted">Restore initial values for ROM branding, theme, and feature switches.</p><button className="danger full" onClick={reset}>Reset configuration</button><div className="warning">Export your settings first if you want to keep a backup.</div></div></div>}
+   {tab==='Virtual Device Lab'&&<div className="vdl-grid">
+    <div className="vdl-screen-panel">
+      <div className="vdl-toolbar"><div><span className="vdl-state-dot"/><b>Emulator session</b><small>Disconnected</small></div><span className="vdl-chip">Worker not connected</span></div>
+      <div className="vdl-screen"><div className="vdl-screen-inner"><div className="vdl-android-mark">◇</div><b>Virtual Device Lab</b><p>Android screen stream will appear here when a compatible emulator worker is connected.</p><span className="vdl-screen-status">NO LIVE SESSION</span></div></div>
+      <div className="vdl-controls"><button disabled>◀ Back</button><button disabled>⌂ Home</button><button disabled>▣ Recents</button><button disabled>⏻ Power</button><button disabled>− Vol</button><button disabled>＋ Vol</button></div>
+      <div className="vdl-worker"><label>Worker WebSocket endpoint (future backend)</label><input placeholder="wss://your-emulator-worker/session" value={workerUrl} onChange={e=>setWorkerUrl(e.target.value)}/><button className="secondary" onClick={()=>setWorkerNote(workerUrl.trim()? 'Endpoint saved for configuration only. No worker connection is implemented yet.':'Enter a worker endpoint first.')}>Configure endpoint</button><p>{workerNote}</p></div>
+    </div>
+    <div className="vdl-side">
+      <div className="panel"><h2>Test readiness</h2><div className="vdl-statusline"><span>Build validation</span><b className="vdl-neutral">Not run</b></div><div className="vdl-statusline"><span>Boot test</span><b className="vdl-neutral">Unavailable</b></div><div className="vdl-statusline"><span>Crash / ANR scan</span><b className="vdl-neutral">Unavailable</b></div><div className="vdl-statusline"><span>Smoke tests</span><b className="vdl-neutral">Unavailable</b></div><div className="warning">Testing is not active. This prototype does not launch Android, stream a ROM, or collect ADB/logcat data.</div></div>
+      <div className="panel"><h2>Target separation</h2><div className="vdl-target"><b>Emulator target</b><p>Virtual hardware profile for Android Emulator testing.</p></div><div className="vdl-target"><b>Galaxy A04s device target</b><p>Real-device kernel, vendor, device tree and hardware integration must be separately verified.</p></div><div className="warning">Virtual boot success alone cannot certify a Galaxy A04s ROM as flash-safe.</div></div>
+    </div>
+   </div>}
    <footer>ROM STUDIO <span>Prototype · no firmware compilation</span></footer>
   </div></main></div>;
 }
