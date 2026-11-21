@@ -1,0 +1,16 @@
+services:
+  emulator-worker:
+    build: .
+    container_name: romstudio-emulator-worker
+    restart: unless-stopped
+    devices:
+      - /dev/kvm:/dev/kvm
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      PORT: 8787
+      AVD_NAME: romstudio_api_35
+      WORKER_TOKEN: ${WORKER_TOKEN:?Set WORKER_TOKEN in your environment}
+      MAX_STREAM_CLIENTS: 1
+    # Keep the worker bound to localhost until reverse proxy + TLS are configured.
+    shm_size: "2gb"
